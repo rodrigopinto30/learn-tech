@@ -1,0 +1,87 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: learn_tech_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+    ports:
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - learn_tech_network
+
+  redis:
+    image: redis:alpine
+    container_name: learn_tech_redis
+    networks:
+      - learn_tech_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: learn_tech_backend
+    volumes:
+      - ./backend:/var/www
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_NAME}
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+    depends_on:
+      - db
+      - redis
+    networks:
+      - learn_tech_network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: learn_tech_frontend
+    volumes:
+      - ./frontend:/usr/src/app
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api
+    depends_on:
+      - backend
+    networks:
+      - learn_tech_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: learn_tech_nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - learn_tech_network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: learn_tech_pma
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: ${DB_PASSWORD}
+    networks:
+      - learn_tech_network
+
+networks:
+  learn_tech_network:
+    driver: bridge
+
+volumes:
+  db_data:
