@@ -1,7 +1,7 @@
 "use client";
 
-import { useAuthStore } from "@/store/useAuthStore";
-import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/src/store/useAuthStore";
+import { Button } from "@/src/components/ui/button";
 // import { DashboardSquare01Icon } from "@hugeicons/react";
 
 export default function AdminDashboard() {
