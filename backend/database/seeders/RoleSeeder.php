@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleSeeder extends Seeder
 {
@@ -14,13 +15,15 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $manageCourses = Permission::create(['name' => 'manage courses']);
+        $watchLessons = Permission::create(['name' => 'watch lessons']);
+
         $admin = Role::create(['name' => 'admin']);
         $student = Role::create(['name' => 'student']);
 
-        Permission::create(['name' => 'manage courses']);
-        Permission::create(['name' => 'enroll courses']);
-
-        $admin->givePermissionTo('manage courses');
-        $student->givePermissionTo('enroll courses');
+        $admin->givePermissionTo($manageCourses);
+        $student->givePermissionTo($watchLessons);
     }
 }
