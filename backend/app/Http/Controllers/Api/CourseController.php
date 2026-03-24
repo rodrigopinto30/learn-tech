@@ -85,4 +85,16 @@ class CourseController extends Controller
             'message' => 'Course deleted'
         ]);
     }
+
+    public function adminIndex(): JsonResponse
+    {
+        $courses = Course::withCount('students')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $courses
+        ]);
+    }
 }
