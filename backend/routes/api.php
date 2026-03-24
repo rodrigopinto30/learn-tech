@@ -16,14 +16,14 @@ Route::get('/test', function () {
     return response()->json(['message' => 'LearnTech API is live!']);
 });
 
-// Rutas publicas (para estudiantes o visitantes)
+// Rutas Publicas
 Route::get('/courses', [CourseController::class, 'index']);
 Route::get('/courses/{slug}', [CourseController::class, 'show']);
 
-// Rutas protegidas para Admin
+// Rutas Protegidas (Solo Admin)
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
-    Route::post('/admin/courses', [CourseController::class, 'store']);
-    Route::put('/admin/courses/{course}', [CourseController::class, 'update']);
-    Route::delete('/admin/courses/{course}', [CourseController::class, 'destroy']);
-    Route::get('/admin/courses', [CourseController::class, 'indexAdmin']);
+    Route::post('/courses', [CourseController::class, 'store']);
+    Route::put('/courses/{course}', [CourseController::class, 'update']);
+    Route::delete('/courses/{course}', [CourseController::class, 'destroy']);
+    Route::get('/admin/courses-list', [CourseController::class, 'adminIndex']);
 });
