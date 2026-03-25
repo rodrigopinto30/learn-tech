@@ -22,12 +22,8 @@ class CourseController extends Controller
         ]);
     }
 
-    public function show(string $slug): JsonResponse
+    public function adminShow(Course $course): JsonResponse
     {
-        $course = Course::with(['modules.lessons'])
-            ->where('slug', $slug)
-            ->firstOrFail();
-
         return response()->json([
             'success' => true,
             'data' => $course
