@@ -10,7 +10,17 @@ import {
   Delete02Icon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
-
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 interface Course {
   id: number;
   title: string;
@@ -31,6 +41,15 @@ export default function AdminCoursesPage() {
       console.error("Error fetching courses", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await api.delete(`/courses/${id}`);
+      setCourses(courses.filter((course) => course.id !== id));
+    } catch (error) {
+      console.error("Error deleting course", error);
     }
   };
 
@@ -140,19 +159,48 @@ export default function AdminCoursesPage() {
                         >
                           Edit
                           {/* <PencilEdit01Icon size={18} /> */}
-                          <span className="sr-only">Edit</span>{" "}
                         </Button>
                       </Link>
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-slate-400 hover:text-red-600"
-                        onClick={() => {}}
-                      >
-                        Delete
-                        {/* <Delete02Icon size={18} /> */}
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-slate-400 hover:text-red-600"
+                          >
+                            Delete
+                            {/* <Delete02Icon size={18} /> */}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="rounded-2xl">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Are you absolutely sure?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will
+                              permanently delete the course
+                              <span className="font-bold text-slate-900">
+                                {" "}
+                                "{course.title}"{" "}
+                              </span>
+                              and remove all associated data.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel className="rounded-xl font-semibold">
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(course.id)}
+                              className="bg-red-600 hover:bg-red-700 rounded-xl font-bold"
+                            >
+                              Delete Course
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </td>
                 </tr>
