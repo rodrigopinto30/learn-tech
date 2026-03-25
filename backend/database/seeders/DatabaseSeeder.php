@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Course;
+use App\Models\Lesson;
+use App\Models\Module;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -26,5 +29,13 @@ class DatabaseSeeder extends Seeder
             'email' => 'student@student.com',
         ]);
         $user->assignRole('student');
+
+        Course::factory(5)->create()->each(function ($course) {
+
+            Module::factory(3)->create(['course_id' => $course->id])->each(function ($module) {
+
+                Lesson::factory(4)->create(['module_id' => $module->id]);
+            });
+        });
     }
 }
