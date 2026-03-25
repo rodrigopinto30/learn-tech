@@ -56,8 +56,12 @@ class AuthController extends Controller
             'success' => true,
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user,
-            'role' => $user->getRoleNames()->first()
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->getRoleNames()->first()
+            ]
         ]);
     }
 }

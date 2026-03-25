@@ -45,9 +45,12 @@ export default function LoginPage() {
 
       if (result.success) {
         setAuth(result.user, result.access_token);
-        router.push(
-          result.role === "admin" ? "/admin/dashboard" : "/dashboard",
-        );
+
+        const userRole = result.user.role;
+
+        window.location.href = userRole === "admin" ? "/admin" : "/dashboard";
+      } else {
+        console.error("Login failed:", result.message);
       }
     } catch (error) {
       console.error("Auth error", error);
