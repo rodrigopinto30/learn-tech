@@ -25,21 +25,24 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       setAuth: (user, token) => {
         Cookies.set('token', token, { expires: 7, secure: true, sameSite: 'strict' });
-        Cookies.set('user_role', user.role, { expires: 7 });
+        Cookies.set('user_role', user.role, { expires: 7 }); 
+        
         set({ user, token, isAuthenticated: true });
       },
       logout: () => {
         Cookies.remove('token');
         Cookies.remove('user_role');
-        
         set({ user: null, token: null, isAuthenticated: false });
-        
         window.location.href = '/login'; 
       },
     }),
     { 
       name: 'learn-tech-auth',
-      partialize: (state) => ({ user: state.user, token: state.token, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({ 
+        user: state.user, 
+        token: state.token, 
+        isAuthenticated: state.isAuthenticated 
+      }),
     }
   )
 );

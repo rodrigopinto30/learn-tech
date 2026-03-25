@@ -7,29 +7,23 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (!token && (pathname.startsWith('/dashboard') || pathname.startsWith('/admin'))) {
-    const response = NextResponse.redirect(new URL('/login', request.url));
-    response.cookies.delete('token');
-    response.cookies.delete('user_role');
-    return response;
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (userRole !== 'admin' && pathname.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  if (token && pathname === '/login') {
+    const target = userRole === 'admin' ? '/admin' : '/dashboard';
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
-  const response = NextResponse.next();
-
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
-    response.headers.set('Cache-Control', 'no-store, max-age=0');
+  if (pathname.startsWith('/admin')) {
+    if (userRole !== 'admin') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
   }
 
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    '/dashboard/:path*', 
-    '/admin/:path*',
-    '/login' 
-  ],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
 };
