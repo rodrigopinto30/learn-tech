@@ -23,6 +23,7 @@ Route::get('/courses/{slug}', [CourseController::class, 'show']);
 // Rutas Protegidas (Solo Admin)
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('/courses', [CourseController::class, 'store']);
+    Route::get('/admin/courses/{course:id}', [CourseController::class, 'adminShow']);
     Route::put('/courses/{course}', [CourseController::class, 'update']);
     Route::delete('/courses/{course}', [CourseController::class, 'destroy']);
     Route::get('/admin/courses-list', [CourseController::class, 'adminIndex']);

@@ -132,19 +132,26 @@ export default function AdminCoursesPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-slate-400 hover:text-indigo-600"
-                      >
-                        {/* <PencilEditIcon size={18} /> */}
-                      </Button>
+                      <Link href={`/admin/courses/${course.id}/edit`}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-slate-400 hover:text-indigo-600"
+                        >
+                          Edit
+                          {/* <PencilEdit01Icon size={18} /> */}
+                          <span className="sr-only">Edit</span>{" "}
+                        </Button>
+                      </Link>
+
                       <Button
                         variant="ghost"
                         size="icon"
                         className="text-slate-400 hover:text-red-600"
+                        onClick={() => {}}
                       >
-                        {/* <DeleteIcon size={18} /> */}
+                        Delete
+                        {/* <Delete02Icon size={18} /> */}
                       </Button>
                     </div>
                   </td>
