@@ -23,7 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-// import { PencilEdit01Icon } from "@hugeicons/react";
+/* import { 
+  PencilEdit01Icon, 
+  BookOpen01Icon, 
+  PlusSignIcon, 
+  Delete02Icon, 
+  PlayListIcon 
+} from "@hugeicons/react"; */
 import api from "@/lib/api";
 import {
   Accordion,
@@ -60,7 +66,7 @@ export default function EditCoursePage() {
 
   const [courseData, setCourseData] = useState<Course | null>(null);
 
-  const form = useForm<z.infer<typeof courseSchema>>({
+  const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
       title: "",
@@ -83,23 +89,54 @@ export default function EditCoursePage() {
 
   const handleAddModule = async () => {
     if (!newModuleTitle.trim()) return;
-
     try {
       const response = await api.post(`/courses/${id}/modules`, {
         title: newModuleTitle,
       });
-
       if (courseData) {
         setCourseData({
           ...courseData,
           modules: [...courseData.modules, response.data.data],
         });
       }
-
       setNewModuleTitle("");
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error creating module", error);
+    }
+  };
+
+  const handleUpdateModule = async (moduleId: number, newTitle: string) => {
+    try {
+      await api.put(`/modules/${moduleId}`, { title: newTitle });
+      setCourseData((prev) =>
+        prev
+          ? {
+              ...prev,
+              modules: prev.modules.map((m) =>
+                m.id === moduleId ? { ...m, title: newTitle } : m,
+              ),
+            }
+          : null,
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteModule = async (moduleId: number) => {
+    try {
+      await api.delete(`/modules/${moduleId}`);
+      setCourseData((prev) =>
+        prev
+          ? {
+              ...prev,
+              modules: prev.modules.filter((m) => m.id !== moduleId),
+            }
+          : null,
+      );
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -108,9 +145,7 @@ export default function EditCoursePage() {
       try {
         const response = await api.get(`/admin/courses/${id}`);
         const data = response.data.data;
-
         setCourseData(data);
-
         form.reset({
           title: data.title,
           description: data.description,
@@ -128,6 +163,7 @@ export default function EditCoursePage() {
     <div className="p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-10">
         <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg">
+          Edit
           {/* <PencilEdit01Icon size={28} /> */}
         </div>
         <div>
@@ -259,7 +295,6 @@ export default function EditCoursePage() {
                 variant="outline"
                 className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
               >
-                {/* <PlusSignIcon size={18} /> */}
                 Add Module
               </Button>
             </DialogTrigger>
@@ -269,9 +304,9 @@ export default function EditCoursePage() {
               </DialogHeader>
               <div className="py-4 space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Module Title</Label>
+                  <Label htmlFor="module-title">Module Title</Label>
                   <Input
-                    id="title"
+                    id="module-title"
                     placeholder="e.g. Introduction to React"
                     value={newModuleTitle}
                     onChange={(e) => setNewModuleTitle(e.target.value)}
@@ -293,19 +328,50 @@ export default function EditCoursePage() {
           </Dialog>
         </div>
 
-        {/* Si el curso tiene módulos, los mostramos */}
         <Accordion type="single" collapsible className="w-full space-y-4">
           {courseData?.modules?.map((module: any) => (
             <AccordionItem
               key={module.id}
               value={`module-${module.id}`}
-              className="border rounded-2xl px-4 bg-slate-50/50"
+              className="border rounded-2xl px-4 bg-white shadow-sm relative group"
             >
-              <AccordionTrigger className="hover:no-underline py-4">
+              <div className="absolute right-12 top-4 z-10 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-slate-400 hover:text-indigo-600"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const title = prompt("New module title:", module.title);
+                    if (title) handleUpdateModule(module.id, title);
+                  }}
+                >
+                  Edit
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-slate-400 hover:text-red-600"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (confirm("Delete this module and all its lessons?")) {
+                      handleDeleteModule(module.id);
+                    }
+                  }}
+                >
+                  Delete
+                </Button>
+              </div>
+
+              <AccordionTrigger className="hover:no-underline py-4 pr-12">
                 <div className="flex items-center gap-3 text-left">
-                  <div className="p-2 bg-white border rounded-lg shadow-sm">
-                    {/* <BookOpen01Icon size={20} className="text-indigo-500" /> */}
-                    Book
+                  <div className="p-2 bg-indigo-50 border border-indigo-100 rounded-lg text-indigo-500">
+                    Open
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
@@ -317,16 +383,16 @@ export default function EditCoursePage() {
                   </div>
                 </div>
               </AccordionTrigger>
+
               <AccordionContent className="pt-2 pb-6">
-                <div className="space-y-2 ml-11 border-l-2 border-slate-200 pl-6">
+                <div className="space-y-2 ml-11 border-l-2 border-slate-100 pl-6">
                   {module.lessons.map((lesson: any) => (
                     <div
                       key={lesson.id}
-                      className="flex items-center justify-between p-3 bg-white border rounded-xl hover:border-indigo-300 transition-colors group"
+                      className="flex items-center justify-between p-3 bg-slate-50 border rounded-xl hover:border-indigo-200 transition-colors group/lesson"
                     >
-                      <div className="flex items-center gap-3">
-                        {/* <PlayListIcon size={18} className="text-slate-400 group-hover:text-indigo-500" /> */}
-                        Play list
+                      <div className="flex items-center gap-3 text-slate-400 group-hover/lesson:text-indigo-500">
+                        Play List
                         <span className="text-sm font-medium text-slate-700">
                           {lesson.title}
                         </span>
@@ -341,9 +407,9 @@ export default function EditCoursePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full justify-start gap-2 text-slate-500 hover:text-indigo-600 mt-2"
+                    className="w-full justify-start gap-2 text-slate-400 hover:text-indigo-600 mt-2"
+                    type="button"
                   >
-                    {/* <PlusSignIcon size={16} /> */}
                     Add Lesson
                   </Button>
                 </div>
