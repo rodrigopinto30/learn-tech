@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseController;
+use App\Http\Controllers\Api\ModuleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,4 +28,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::put('/courses/{course}', [CourseController::class, 'update']);
     Route::delete('/courses/{course:id}', [CourseController::class, 'destroy']);
     Route::get('/admin/courses-list', [CourseController::class, 'adminIndex']);
+
+    Route::post('/courses/{course}/modules', [ModuleController::class, 'store']);
 });
