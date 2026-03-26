@@ -28,6 +28,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::put('/courses/{course}', [CourseController::class, 'update']);
     Route::delete('/courses/{course:id}', [CourseController::class, 'destroy']);
     Route::get('/admin/courses-list', [CourseController::class, 'adminIndex']);
-
     Route::post('/courses/{course}/modules', [ModuleController::class, 'store']);
+
+    Route::put('/modules/{module}', [ModuleController::class, 'update']);
+    Route::delete('/modules/{module}', [ModuleController::class, 'destroy']);
 });
