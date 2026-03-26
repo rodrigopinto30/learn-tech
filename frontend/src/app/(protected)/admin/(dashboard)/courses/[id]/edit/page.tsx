@@ -5,9 +5,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter, useParams } from "next/navigation";
+import api from "@/lib/api";
+import { Course } from "@/types";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Form,
   FormControl,
@@ -23,23 +27,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import api from "@/lib/api";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Course } from "@/types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+
+import { RichEditor } from "@/components/rich-editor";
 
 const courseSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -55,12 +57,26 @@ export default function EditCoursePage() {
   const params = useParams();
   const id = params?.id;
 
+  const [courseData, setCourseData] = useState<Course | null>(null);
+
+  // Modulos
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Lecciones
   const [newLessonTitle, setNewLessonTitle] = useState("");
   const [activeModuleId, setActiveModuleId] = useState<number | null>(null);
   const [isLessonDialogOpen, setIsLessonDialogOpen] = useState(false);
-  const [courseData, setCourseData] = useState<Course | null>(null);
+
+  // Contenido de Lección (Rich Text)
+  const [editingLessonContent, setEditingLessonContent] = useState<{
+    moduleId: number;
+    lessonId: number;
+    title: string;
+    content: string;
+  } | null>(null);
+  const [lessonContentHtml, setLessonContentHtml] = useState("");
+  const [isContentDialogOpen, setIsContentDialogOpen] = useState(false);
 
   const form = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
@@ -88,9 +104,10 @@ export default function EditCoursePage() {
         console.error("Error loading course", error);
       }
     };
-    loadCourse();
+    if (id) loadCourse();
   }, [id, form]);
 
+  // ACCIONES DE CURSO
   async function onSubmit(values: CourseFormValues) {
     try {
       const response = await api.put(`/courses/${id}`, values);
@@ -102,8 +119,7 @@ export default function EditCoursePage() {
     }
   }
 
-  // --- GESTION DE MODULOS ---
-
+  // GESTIoN DE MÓDULOS
   const handleAddModule = async () => {
     if (!newModuleTitle.trim()) return;
     try {
@@ -157,8 +173,7 @@ export default function EditCoursePage() {
     }
   };
 
-  // --- GESTION DE LECCIONES ---
-
+  // GESTIÓN DE LECCIONES
   const handleAddLesson = async () => {
     if (!newLessonTitle.trim() || !activeModuleId) return;
     try {
@@ -236,10 +251,51 @@ export default function EditCoursePage() {
     }
   };
 
+  // GESTIoN DE CONTENIDO (RICH TEXT)
+  const handleSaveLessonContent = async () => {
+    if (!editingLessonContent) return;
+
+    try {
+      const response = await api.put(
+        `/lessons/${editingLessonContent.lessonId}`,
+        {
+          content: lessonContentHtml,
+        },
+      );
+
+      if (response.data.success) {
+        setCourseData((prev) =>
+          prev
+            ? {
+                ...prev,
+                modules: prev.modules.map((m) =>
+                  m.id === editingLessonContent.moduleId
+                    ? {
+                        ...m,
+                        lessons: m.lessons.map((l: any) =>
+                          l.id === editingLessonContent.lessonId
+                            ? { ...l, content: lessonContentHtml }
+                            : l,
+                        ),
+                      }
+                    : m,
+                ),
+              }
+            : null,
+        );
+
+        setIsContentDialogOpen(false);
+        setEditingLessonContent(null);
+      }
+    } catch (error) {
+      console.error("Error saving content", error);
+    }
+  };
+
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-10">
-        <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg">
+        <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg font-bold">
           Edit
         </div>
         <div>
@@ -247,7 +303,7 @@ export default function EditCoursePage() {
             Edit Course
           </h1>
           <p className="text-slate-500 font-medium">
-            Modify the details of your course.
+            Modify the details of your course and curriculum.
           </p>
         </div>
       </div>
@@ -365,43 +421,13 @@ export default function EditCoursePage() {
               Organize your modules and lessons.
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                variant="outline"
-                className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
-              >
-                Add Module
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Module</DialogTitle>
-              </DialogHeader>
-              <div className="py-4 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="module-title">Module Title</Label>
-                  <Input
-                    id="module-title"
-                    value={newModuleTitle}
-                    onChange={(e) => setNewModuleTitle(e.target.value)}
-                    placeholder="e.g. Introduction"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleAddModule}
-                  className="bg-indigo-600 hover:bg-indigo-700"
-                >
-                  Create Module
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button
+            onClick={() => setIsDialogOpen(true)}
+            variant="outline"
+            className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+          >
+            Add Module
+          </Button>
         </div>
 
         <Accordion type="single" collapsible className="w-full space-y-4">
@@ -416,9 +442,7 @@ export default function EditCoursePage() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-slate-400 hover:text-indigo-600"
-                  type="button"
                   onClick={(e) => {
-                    e.preventDefault();
                     e.stopPropagation();
                     const title = prompt("New module title:", module.title);
                     if (title) handleUpdateModule(module.id, title);
@@ -430,9 +454,7 @@ export default function EditCoursePage() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-slate-400 hover:text-red-600"
-                  type="button"
                   onClick={(e) => {
-                    e.preventDefault();
                     e.stopPropagation();
                     if (confirm("Delete this module?"))
                       handleDeleteModule(module.id);
@@ -444,35 +466,44 @@ export default function EditCoursePage() {
 
               <AccordionTrigger className="hover:no-underline py-4 pr-12">
                 <div className="flex items-center gap-3 text-left">
-                  <div className="p-2 bg-indigo-50 border border-indigo-100 rounded-lg text-indigo-500">
-                    Open
+                  <div className="p-2 bg-indigo-50 border border-indigo-100 rounded-lg text-indigo-500 font-bold text-xs uppercase">
+                    Mod {module.order}
                   </div>
-                  <div>
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                      Module {module.order}
-                    </span>
-                    <h3 className="font-semibold text-slate-900 leading-none mt-1">
-                      {module.title}
-                    </h3>
-                  </div>
+                  <h3 className="font-semibold text-slate-900">
+                    {module.title}
+                  </h3>
                 </div>
               </AccordionTrigger>
 
               <AccordionContent className="pt-2 pb-6">
                 <div className="space-y-2 ml-11 border-l-2 border-slate-100 pl-6">
-                  {module.lessons.map((lesson: any) => (
+                  {module.lessons?.map((lesson: any) => (
                     <div
                       key={lesson.id}
                       className="flex items-center justify-between p-3 bg-slate-50 border rounded-xl hover:border-indigo-200 transition-colors group/lesson"
                     >
-                      <div className="flex items-center gap-3 text-slate-400 group-hover/lesson:text-indigo-500">
-                        Play List{" "}
-                        <span className="text-sm font-medium text-slate-700">
-                          {lesson.title}
-                        </span>
-                      </div>
+                      <span className="text-sm font-medium text-slate-700">
+                        {lesson.title}
+                      </span>
 
                       <div className="flex items-center gap-1 opacity-0 group-hover/lesson:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-indigo-600 hover:bg-indigo-100"
+                          onClick={() => {
+                            setEditingLessonContent({
+                              moduleId: module.id,
+                              lessonId: lesson.id,
+                              title: lesson.title,
+                              content: lesson.content || "",
+                            });
+                            setLessonContentHtml(lesson.content || "");
+                            setIsContentDialogOpen(true);
+                          }}
+                        >
+                          Content
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -507,13 +538,12 @@ export default function EditCoursePage() {
                     variant="ghost"
                     size="sm"
                     className="w-full justify-start gap-2 text-slate-400 hover:text-indigo-600 mt-2"
-                    type="button"
                     onClick={() => {
                       setActiveModuleId(module.id);
                       setIsLessonDialogOpen(true);
                     }}
                   >
-                    Add Lesson
+                    + Add Lesson
                   </Button>
                 </div>
               </AccordionContent>
@@ -521,6 +551,32 @@ export default function EditCoursePage() {
           ))}
         </Accordion>
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Module</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label>Module Title</Label>
+              <Input
+                value={newModuleTitle}
+                onChange={(e) => setNewModuleTitle(e.target.value)}
+                placeholder="e.g. Introduction"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddModule} className="bg-indigo-600">
+              Create Module
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isLessonDialogOpen} onOpenChange={setIsLessonDialogOpen}>
         <DialogContent>
@@ -533,7 +589,7 @@ export default function EditCoursePage() {
               <Input
                 value={newLessonTitle}
                 onChange={(e) => setNewLessonTitle(e.target.value)}
-                placeholder="e.g. Introduction to Variables"
+                placeholder="e.g. Setting up the environment"
                 autoFocus
               />
             </div>
@@ -545,11 +601,43 @@ export default function EditCoursePage() {
             >
               Cancel
             </Button>
+            <Button onClick={handleAddLesson} className="bg-indigo-600">
+              Create Lesson
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isContentDialogOpen} onOpenChange={setIsContentDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-6 border-b">
+            <DialogTitle className="text-xl">
+              Editing Content:{" "}
+              <span className="text-indigo-600">
+                {editingLessonContent?.title}
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+            <RichEditor
+              content={lessonContentHtml}
+              onChange={setLessonContentHtml}
+            />
+          </div>
+
+          <DialogFooter className="p-4 border-t bg-white sticky bottom-0">
             <Button
-              onClick={handleAddLesson}
+              variant="ghost"
+              onClick={() => setIsContentDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveLessonContent}
               className="bg-indigo-600 text-white"
             >
-              Create Lesson
+              Save Content
             </Button>
           </DialogFooter>
         </DialogContent>
