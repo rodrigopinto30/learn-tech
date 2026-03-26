@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseController;
+use App\Http\Controllers\Api\LessonController;
 use App\Http\Controllers\Api\ModuleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -32,4 +33,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
     Route::put('/modules/{module}', [ModuleController::class, 'update']);
     Route::delete('/modules/{module}', [ModuleController::class, 'destroy']);
+
+    Route::post('/modules/{module}/lessons', [LessonController::class, 'store']);
+    Route::put('/lessons/{lesson}', [LessonController::class, 'update']);
+    Route::delete('/lessons/{lesson}', [LessonController::class, 'destroy']);
 });

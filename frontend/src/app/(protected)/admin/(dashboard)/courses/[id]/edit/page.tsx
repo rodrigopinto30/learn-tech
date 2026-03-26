@@ -61,9 +61,13 @@ export default function EditCoursePage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
+
+  // Estados
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+  const [newLessonTitle, setNewLessonTitle] = useState("");
+  const [activeModuleId, setActiveModuleId] = useState<number | null>(null);
+  const [isLessonDialogOpen, setIsLessonDialogOpen] = useState(false);
   const [courseData, setCourseData] = useState<Course | null>(null);
 
   const form = useForm<CourseFormValues>({
@@ -76,6 +80,25 @@ export default function EditCoursePage() {
     },
   });
 
+  useEffect(() => {
+    const loadCourse = async () => {
+      try {
+        const response = await api.get(`/admin/courses/${id}`);
+        const data = response.data.data;
+        setCourseData(data);
+        form.reset({
+          title: data.title,
+          description: data.description,
+          price: data.price.toString(),
+          status: data.status,
+        });
+      } catch (error) {
+        console.error("Error loading course", error);
+      }
+    };
+    loadCourse();
+  }, [id, form]);
+
   async function onSubmit(values: CourseFormValues) {
     try {
       const response = await api.put(`/courses/${id}`, values);
@@ -87,6 +110,7 @@ export default function EditCoursePage() {
     }
   }
 
+  // Módulos
   const handleAddModule = async () => {
     if (!newModuleTitle.trim()) return;
     try {
@@ -140,31 +164,37 @@ export default function EditCoursePage() {
     }
   };
 
-  useEffect(() => {
-    const loadCourse = async () => {
-      try {
-        const response = await api.get(`/admin/courses/${id}`);
-        const data = response.data.data;
-        setCourseData(data);
-        form.reset({
-          title: data.title,
-          description: data.description,
-          price: data.price.toString(),
-          status: data.status,
+  // Lecciones
+  const handleAddLesson = async () => {
+    if (!newLessonTitle.trim() || !activeModuleId) return;
+    try {
+      const response = await api.post(`/modules/${activeModuleId}/lessons`, {
+        title: newLessonTitle,
+      });
+
+      if (courseData) {
+        setCourseData({
+          ...courseData,
+          modules: courseData.modules.map((m) =>
+            m.id === activeModuleId
+              ? { ...m, lessons: [...m.lessons, response.data.data] }
+              : m,
+          ),
         });
-      } catch (error) {
-        console.error("Error loading course", error);
       }
-    };
-    loadCourse();
-  }, [id, form]);
+      setNewLessonTitle("");
+      setIsLessonDialogOpen(false);
+      setActiveModuleId(null);
+    } catch (error) {
+      console.error("Error creating lesson", error);
+    }
+  };
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-10">
         <div className="p-3 bg-amber-500 text-white rounded-2xl shadow-lg">
           Edit
-          {/* <PencilEdit01Icon size={28} /> */}
         </div>
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
@@ -271,7 +301,7 @@ export default function EditCoursePage() {
             </Button>
             <Button
               type="submit"
-              className="bg-amber-500 hover:bg-amber-600 text-white h-12 px-10 rounded-xl font-bold transition-all transform active:scale-95 shadow-md shadow-amber-100"
+              className="bg-amber-500 hover:bg-amber-600 text-white h-12 px-10 rounded-xl font-bold transition-all shadow-md"
             >
               Update Course
             </Button>
@@ -307,9 +337,9 @@ export default function EditCoursePage() {
                   <Label htmlFor="module-title">Module Title</Label>
                   <Input
                     id="module-title"
-                    placeholder="e.g. Introduction to React"
                     value={newModuleTitle}
                     onChange={(e) => setNewModuleTitle(e.target.value)}
+                    placeholder="e.g. Introduction"
                   />
                 </div>
               </div>
@@ -350,7 +380,6 @@ export default function EditCoursePage() {
                 >
                   Edit
                 </Button>
-
                 <Button
                   variant="ghost"
                   size="icon"
@@ -359,9 +388,8 @@ export default function EditCoursePage() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (confirm("Delete this module and all its lessons?")) {
+                    if (confirm("Delete this module?"))
                       handleDeleteModule(module.id);
-                    }
                   }}
                 >
                   Delete
@@ -392,7 +420,7 @@ export default function EditCoursePage() {
                       className="flex items-center justify-between p-3 bg-slate-50 border rounded-xl hover:border-indigo-200 transition-colors group/lesson"
                     >
                       <div className="flex items-center gap-3 text-slate-400 group-hover/lesson:text-indigo-500">
-                        Play List
+                        Play List{" "}
                         <span className="text-sm font-medium text-slate-700">
                           {lesson.title}
                         </span>
@@ -404,11 +432,16 @@ export default function EditCoursePage() {
                       )}
                     </div>
                   ))}
+
                   <Button
                     variant="ghost"
                     size="sm"
                     className="w-full justify-start gap-2 text-slate-400 hover:text-indigo-600 mt-2"
                     type="button"
+                    onClick={() => {
+                      setActiveModuleId(module.id);
+                      setIsLessonDialogOpen(true);
+                    }}
                   >
                     Add Lesson
                   </Button>
@@ -418,6 +451,39 @@ export default function EditCoursePage() {
           ))}
         </Accordion>
       </div>
+
+      <Dialog open={isLessonDialogOpen} onOpenChange={setIsLessonDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Lesson</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label>Lesson Title</Label>
+              <Input
+                value={newLessonTitle}
+                onChange={(e) => setNewLessonTitle(e.target.value)}
+                placeholder="e.g. Introduction to Variables"
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setIsLessonDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddLesson}
+              className="bg-indigo-600 text-white"
+            >
+              Create Lesson
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
