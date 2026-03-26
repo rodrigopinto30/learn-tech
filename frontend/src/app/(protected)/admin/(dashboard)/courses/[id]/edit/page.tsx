@@ -32,6 +32,15 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Course } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 const courseSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -46,6 +55,8 @@ export default function EditCoursePage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
+  const [newModuleTitle, setNewModuleTitle] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const [courseData, setCourseData] = useState<Course | null>(null);
 
@@ -58,6 +69,39 @@ export default function EditCoursePage() {
       status: "draft",
     },
   });
+
+  async function onSubmit(values: CourseFormValues) {
+    try {
+      const response = await api.put(`/courses/${id}`, values);
+      if (response.data.success) {
+        router.push("/admin/courses");
+      }
+    } catch (error) {
+      console.error("Update failed", error);
+    }
+  }
+
+  const handleAddModule = async () => {
+    if (!newModuleTitle.trim()) return;
+
+    try {
+      const response = await api.post(`/courses/${id}/modules`, {
+        title: newModuleTitle,
+      });
+
+      if (courseData) {
+        setCourseData({
+          ...courseData,
+          modules: [...courseData.modules, response.data.data],
+        });
+      }
+
+      setNewModuleTitle("");
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error creating module", error);
+    }
+  };
 
   useEffect(() => {
     const loadCourse = async () => {
@@ -79,17 +123,6 @@ export default function EditCoursePage() {
     };
     loadCourse();
   }, [id, form]);
-
-  async function onSubmit(values: CourseFormValues) {
-    try {
-      const response = await api.put(`/courses/${id}`, values);
-      if (response.data.success) {
-        router.push("/admin/courses");
-      }
-    } catch (error) {
-      console.error("Update failed", error);
-    }
-  }
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
@@ -220,13 +253,44 @@ export default function EditCoursePage() {
               Organize your modules and lessons.
             </p>
           </div>
-          <Button
-            variant="outline"
-            className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
-          >
-            {/* <PlusSignIcon size={18} /> */}
-            Add Module
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="gap-2 border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+              >
+                {/* <PlusSignIcon size={18} /> */}
+                Add Module
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Module</DialogTitle>
+              </DialogHeader>
+              <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Module Title</Label>
+                  <Input
+                    id="title"
+                    placeholder="e.g. Introduction to React"
+                    value={newModuleTitle}
+                    onChange={(e) => setNewModuleTitle(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAddModule}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Create Module
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Si el curso tiene módulos, los mostramos */}
