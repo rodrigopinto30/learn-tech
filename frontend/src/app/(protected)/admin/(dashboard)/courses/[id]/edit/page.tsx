@@ -23,13 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-/* import { 
-  PencilEdit01Icon, 
-  BookOpen01Icon, 
-  PlusSignIcon, 
-  Delete02Icon, 
-  PlayListIcon 
-} from "@hugeicons/react"; */
 import api from "@/lib/api";
 import {
   Accordion,
@@ -62,7 +55,6 @@ export default function EditCoursePage() {
   const params = useParams();
   const id = params?.id;
 
-  // Estados
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newLessonTitle, setNewLessonTitle] = useState("");
@@ -110,7 +102,8 @@ export default function EditCoursePage() {
     }
   }
 
-  // Módulos
+  // --- GESTION DE MODULOS ---
+
   const handleAddModule = async () => {
     if (!newModuleTitle.trim()) return;
     try {
@@ -164,7 +157,8 @@ export default function EditCoursePage() {
     }
   };
 
-  // Lecciones
+  // --- GESTION DE LECCIONES ---
+
   const handleAddLesson = async () => {
     if (!newLessonTitle.trim() || !activeModuleId) return;
     try {
@@ -172,12 +166,12 @@ export default function EditCoursePage() {
         title: newLessonTitle,
       });
 
-      if (courseData) {
+      if (courseData && response.data.success) {
         setCourseData({
           ...courseData,
           modules: courseData.modules.map((m) =>
             m.id === activeModuleId
-              ? { ...m, lessons: [...m.lessons, response.data.data] }
+              ? { ...m, lessons: [...(m.lessons || []), response.data.data] }
               : m,
           ),
         });
@@ -187,6 +181,58 @@ export default function EditCoursePage() {
       setActiveModuleId(null);
     } catch (error) {
       console.error("Error creating lesson", error);
+    }
+  };
+
+  const handleUpdateLesson = async (
+    moduleId: number,
+    lessonId: number,
+    newTitle: string,
+  ) => {
+    try {
+      await api.put(`/lessons/${lessonId}`, { title: newTitle });
+      setCourseData((prev) =>
+        prev
+          ? {
+              ...prev,
+              modules: prev.modules.map((m) =>
+                m.id === moduleId
+                  ? {
+                      ...m,
+                      lessons: m.lessons.map((l: any) =>
+                        l.id === lessonId ? { ...l, title: newTitle } : l,
+                      ),
+                    }
+                  : m,
+              ),
+            }
+          : null,
+      );
+    } catch (error) {
+      console.error("Error updating lesson", error);
+    }
+  };
+
+  const handleDeleteLesson = async (moduleId: number, lessonId: number) => {
+    try {
+      await api.delete(`/lessons/${lessonId}`);
+      setCourseData((prev) =>
+        prev
+          ? {
+              ...prev,
+              modules: prev.modules.map((m) =>
+                m.id === moduleId
+                  ? {
+                      ...m,
+                      lessons: m.lessons.filter((l: any) => l.id !== lessonId),
+                    }
+                  : m,
+              ),
+            }
+          : null,
+      );
+    } catch (error) {
+      console.error("Error deleting lesson", error);
     }
   };
 
@@ -425,11 +471,35 @@ export default function EditCoursePage() {
                           {lesson.title}
                         </span>
                       </div>
-                      {lesson.is_preview && (
-                        <span className="text-[10px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-bold uppercase">
-                          Preview
-                        </span>
-                      )}
+
+                      <div className="flex items-center gap-1 opacity-0 group-hover/lesson:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-slate-400 hover:text-indigo-600"
+                          onClick={() => {
+                            const title = prompt(
+                              "New lesson title:",
+                              lesson.title,
+                            );
+                            if (title)
+                              handleUpdateLesson(module.id, lesson.id, title);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-slate-400 hover:text-red-600"
+                          onClick={() => {
+                            if (confirm("Delete this lesson?"))
+                              handleDeleteLesson(module.id, lesson.id);
+                          }}
+                        >
+                          Del
+                        </Button>
+                      </div>
                     </div>
                   ))}
 
