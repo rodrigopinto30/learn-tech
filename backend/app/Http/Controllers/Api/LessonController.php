@@ -32,7 +32,10 @@ class LessonController extends Controller
 
     public function update(Request $request, Lesson $lesson): JsonResponse
     {
-        $lesson->update($request->only('title', 'is_preview', 'order'));
+        $lesson->update([
+            'title' => $request->title ?? $lesson->title,
+            'content' => $request->content,
+        ]);
         return response()->json(['success' => true, 'data' => $lesson]);
     }
 
