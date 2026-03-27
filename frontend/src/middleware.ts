@@ -6,24 +6,30 @@ export function middleware(request: NextRequest) {
   const userRole = request.cookies.get('user_role')?.value;
   const { pathname } = request.nextUrl;
 
-  if (!token && (pathname.startsWith('/dashboard') || pathname.startsWith('/admin'))) {
+  const studentHome = '/learn';
+  const adminHome = '/admin/dashboard';
+
+  if (!token && (pathname.startsWith('/learn') || pathname.startsWith('/admin'))) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (token && pathname === '/login') {
-    const target = userRole === 'admin' ? '/admin' : '/dashboard';
+  if (token && (pathname === '/login' || pathname === '/')) {
+    const target = userRole === 'admin' ? adminHome : studentHome;
     return NextResponse.redirect(new URL(target, request.url));
   }
 
-  if (pathname.startsWith('/admin')) {
-    if (userRole !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
+  const isKnownArea = pathname.startsWith('/admin') || pathname.startsWith('/learn') || pathname === '/login';
+
+  if (token && !isKnownArea) {
+    const target = userRole === 'admin' ? adminHome : studentHome;
+    return NextResponse.redirect(new URL(target, request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/admin/:path*', '/login'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };

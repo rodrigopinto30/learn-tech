@@ -48,7 +48,8 @@ export default function LoginPage() {
 
         const userRole = result.user.role;
 
-        window.location.href = userRole === "admin" ? "/admin" : "/dashboard";
+        window.location.href =
+          userRole === "admin" ? "/admin/dashboard" : "/learn";
       } else {
         console.error("Login failed:", result.message);
       }
