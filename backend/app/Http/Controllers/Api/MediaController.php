@@ -11,33 +11,31 @@ use Illuminate\Http\JsonResponse;
 
 class MediaController extends Controller
 {
-    public function upload(Request $request, Lesson $lesson): JsonResponse
+    public function upload(Request $request, Lesson $lesson)
     {
         $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi|max:102400',
+            'file' => 'required|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi|max:204800',
         ]);
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $type = $file->getMimeType();
-            $isVideo = Str::startsWith($type, 'video/');
 
             $courseId = $lesson->module->course_id;
-            $path = "courses/{$courseId}/lessons/{$lesson->id}/media";
+            $folder = "courses/{$courseId}/lessons/{$lesson->id}/media";
 
-            $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
-            $storedPath = $file->storeAs($path, $fileName, 'public');
+            $extension = $file->getClientOriginalExtension();
+            $nameOnly = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $fileName = Str::random(15) . '_' . Str::slug($nameOnly) . '.' . $extension;
+            $path = $file->storeAs($folder, $fileName, 'public');
 
-            $url = asset('storage/' . $storedPath);
+            $url = url('/storage/' . $path);
 
             return response()->json([
                 'success' => true,
-                'url' => $url,
-                'type' => $isVideo ? 'video' : 'image',
-                'name' => $file->getClientOriginalName()
+                'url' => $url
             ]);
         }
 
-        return response()->json(['success' => false, 'message' => 'File not found'], 400);
+        return response()->json(['success' => false], 400);
     }
 }

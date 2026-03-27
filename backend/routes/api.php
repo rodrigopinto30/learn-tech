@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\ModuleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -39,4 +41,18 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::put('/lessons/{lesson}', [LessonController::class, 'update']);
     Route::delete('/lessons/{lesson}', [LessonController::class, 'destroy']);
     Route::post('/lessons/{lesson}/media', [MediaController::class, 'upload']);
+
+    Route::get('/storage/{path}', function ($path) {
+        $path = str_replace('../', '', $path);
+        $fullPath = "public/" . $path;
+
+        if (!Storage::exists($fullPath)) {
+            abort(404);
+        }
+
+        $file = Storage::get($fullPath);
+        $type = Storage::mimeType($fullPath);
+
+        return Response::make($file, 200)->header("Content-Type", $type);
+    })->where('path', '.*');
 });
