@@ -623,6 +623,7 @@ export default function EditCoursePage() {
             <RichEditor
               content={lessonContentHtml}
               onChange={setLessonContentHtml}
+              lessonId={editingLessonContent?.lessonId}
             />
           </div>
 
