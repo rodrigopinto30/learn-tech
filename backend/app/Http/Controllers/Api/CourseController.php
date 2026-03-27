@@ -10,12 +10,9 @@ use Illuminate\Support\Str;
 
 class CourseController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request)
     {
-        $courses = Course::with(['modules.lessons'])
-            ->where('status', 'published')
-            ->get();
-
+        $courses = Course::with('modules')->get();
         return response()->json([
             'success' => true,
             'data' => $courses

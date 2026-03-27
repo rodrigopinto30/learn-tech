@@ -3,12 +3,6 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import {
-  PlusSignIcon,
-  CourseIcon,
-  PencilEdit01Icon,
-  Delete02Icon,
-} from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import {
   AlertDialog,
