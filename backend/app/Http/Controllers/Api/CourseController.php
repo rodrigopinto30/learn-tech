@@ -19,6 +19,12 @@ class CourseController extends Controller
         ]);
     }
 
+    public function show(Course $course)
+    {
+        $course->load('modules.lessons');
+        return response()->json(['success' => true, 'data' => $course]);
+    }
+
     public function adminShow(Course $course): JsonResponse
     {
         $course->load(['modules.lessons']);
