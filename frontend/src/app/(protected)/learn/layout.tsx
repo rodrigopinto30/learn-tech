@@ -1,10 +1,8 @@
-// src/app/(protected)/learn/layout.tsx
 "use client";
 
 import Sidebar from "@/components/navigation/Sidebar";
 import { UserCircle, LogOut, Bell, Search } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
-
 export default function StudentLayout({
   children,
 }: {
