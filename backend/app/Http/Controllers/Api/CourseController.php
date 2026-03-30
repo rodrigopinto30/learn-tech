@@ -12,10 +12,34 @@ class CourseController extends Controller
 {
     public function index(Request $request)
     {
-        $courses = Course::with('modules')->get();
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        $courses = Course::with(['modules.lessons'])->get();
+
+        $coursesWithProgress = $courses->map(function ($course) use ($user) {
+            $allLessons = $course->modules->flatMap->lessons;
+            $totalLessons = $allLessons->count();
+
+            $completedCount = 0;
+            if ($user && $totalLessons > 0) {
+                $completedCount = $user->completedLessons()
+                    ->whereIn('lesson_id', $allLessons->pluck('id'))
+                    ->count();
+            }
+
+            $progress = $totalLessons > 0 ? round(($completedCount / $totalLessons) * 100) : 0;
+
+            $course->progress_percentage = $progress;
+            $course->total_lessons_count = $totalLessons;
+            $course->completed_lessons_count = $completedCount;
+
+            return $course;
+        });
+
         return response()->json([
             'success' => true,
-            'data' => $courses
+            'data' => $coursesWithProgress
         ]);
     }
 

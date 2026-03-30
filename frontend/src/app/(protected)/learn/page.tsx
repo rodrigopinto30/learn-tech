@@ -58,71 +58,108 @@ export default function StudentCoursesPage() {
 
       {courses.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {courses.map((course: any) => (
-            <Card
-              key={course.id}
-              className="group border-none shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 rounded-[2.5rem] overflow-hidden bg-white flex flex-col h-full"
-            >
-              <div className="relative aspect-video overflow-hidden">
-                <div className="absolute inset-0 bg-emerald-900/10 group-hover:bg-transparent transition-colors z-10" />
+          {courses.map((course: any) => {
+            const isCompleted = course.progress_percentage === 100;
 
-                <Image
-                  src={
-                    course.thumbnail ||
-                    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800"
-                  }
-                  alt={course.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-                <Badge className="absolute top-5 left-5 z-20 bg-white/90 backdrop-blur-md text-emerald-700 hover:bg-white border-none rounded-2xl px-4 py-1 shadow-sm font-bold">
-                  {course.category || "Development"}
-                </Badge>
-              </div>
+            return (
+              <Card
+                key={course.id}
+                className="group border-none shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-500 rounded-[2.5rem] overflow-hidden bg-white flex flex-col h-full"
+              >
+                <div className="relative aspect-video overflow-hidden">
+                  <div className="absolute inset-0 bg-emerald-900/10 group-hover:bg-transparent transition-colors z-10" />
 
-              <CardContent className="p-8 flex-grow space-y-4">
-                <h3 className="text-2xl font-bold text-slate-800 line-clamp-1 group-hover:text-emerald-600 transition-colors tracking-tight">
-                  {course.title}
-                </h3>
-                <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed font-medium">
-                  {course.description}
-                </p>
+                  <Image
+                    src={
+                      course.thumbnail ||
+                      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800"
+                    }
+                    alt={course.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  />
 
-                <div className="flex items-center gap-5 text-slate-400 text-[10px] font-black uppercase tracking-wider pt-2">
-                  <div className="flex items-center gap-1.5">
-                    <BookOpen size={16} className="text-emerald-500" />
-                    <span>{course.modules?.length || 0} Modules</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Clock size={16} className="text-emerald-500" />
-                    <span>Self-paced</span>
-                  </div>
+                  <Badge
+                    className={`absolute top-5 left-5 z-20 backdrop-blur-md border-none rounded-2xl px-4 py-1 shadow-sm font-bold ${
+                      isCompleted
+                        ? "bg-emerald-500 text-white"
+                        : "bg-white/90 text-emerald-700"
+                    }`}
+                  >
+                    {isCompleted
+                      ? "Completed"
+                      : course.category || "Development"}
+                  </Badge>
                 </div>
 
-                <div className="space-y-2 pt-4">
-                  <div className="flex justify-between text-xs font-bold text-slate-400">
-                    <span>Progress</span>
-                    <span className="text-emerald-600">0%</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full w-[0%]" />
-                  </div>
-                </div>
-              </CardContent>
+                <CardContent className="p-8 flex-grow space-y-4">
+                  <h3 className="text-2xl font-bold text-slate-800 line-clamp-1 group-hover:text-emerald-600 transition-colors tracking-tight">
+                    {course.title}
+                  </h3>
+                  <p className="text-slate-500 text-sm line-clamp-2 leading-relaxed font-medium">
+                    {course.description}
+                  </p>
 
-              <CardFooter className="p-8 pt-0">
-                <Link href={`/learn/${course.id}`} className="w-full">
-                  <Button className="w-full bg-slate-900 hover:bg-emerald-600 text-white rounded-[1.2rem] h-14 font-bold transition-all gap-2 group/btn">
-                    Continue Learning
-                    <PlayCircle
-                      size={20}
-                      className="group-hover/btn:translate-x-1 transition-transform"
-                    />
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
+                  <div className="flex items-center gap-5 text-slate-400 text-[10px] font-black uppercase tracking-wider pt-2">
+                    <div className="flex items-center gap-1.5">
+                      <BookOpen size={16} className="text-emerald-500" />
+                      <span>{course.total_lessons_count || 0} Lessons</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={16} className="text-emerald-500" />
+                      <span>{isCompleted ? "Finished" : "Self-paced"}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-4">
+                    <div className="flex justify-between items-end">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
+                          Progress
+                        </span>
+                        <span className="text-lg font-black text-emerald-600 leading-none">
+                          {course.progress_percentage || 0}%
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">
+                        {course.completed_lessons_count || 0} /{" "}
+                        {course.total_lessons_count || 0} Units
+                      </span>
+                    </div>
+
+                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-50 shadow-inner">
+                      <div
+                        className={`h-full rounded-full transition-all duration-1000 ease-out ${
+                          isCompleted
+                            ? "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]"
+                            : "bg-emerald-500"
+                        }`}
+                        style={{ width: `${course.progress_percentage || 0}%` }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+
+                <CardFooter className="p-8 pt-0">
+                  <Link href={`/learn/${course.id}`} className="w-full">
+                    <Button
+                      className={`w-full rounded-[1.2rem] h-14 font-bold transition-all gap-2 group/btn ${
+                        isCompleted
+                          ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-2 border-emerald-100"
+                          : "bg-slate-900 hover:bg-emerald-600 text-white"
+                      }`}
+                    >
+                      {isCompleted ? "Review Content" : "Continue Learning"}
+                      <PlayCircle
+                        size={20}
+                        className="group-hover/btn:translate-x-1 transition-transform"
+                      />
+                    </Button>
+                  </Link>
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-24 px-6 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
