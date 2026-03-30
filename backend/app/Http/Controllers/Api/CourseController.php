@@ -21,8 +21,22 @@ class CourseController extends Controller
 
     public function show(Course $course)
     {
-        $course->load('modules.lessons');
-        return response()->json(['success' => true, 'data' => $course]);
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        $course->load(['modules.lessons']);
+
+        $completedLessonIds = $user ? $user->completedLessons()
+            ->whereIn('lesson_id', $course->modules->flatMap->lessons->pluck('id'))
+            ->pluck('lesson_id')
+            ->toArray() : [];
+
+        return response()->json([
+            'success' => true,
+            'data' => array_merge($course->toArray(), [
+                'completed_lessons_ids' => $completedLessonIds
+            ])
+        ]);
     }
 
     public function adminShow(Course $course): JsonResponse

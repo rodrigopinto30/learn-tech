@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\LessonController;
+use App\Http\Controllers\Api\LessonProgressController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\ModuleController;
 use Illuminate\Http\Request;
@@ -38,6 +39,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/my-courses', [CourseController::class, 'index']);
 
     Route::get('/learn/courses/{course:id}', [CourseController::class, 'show']);
+
+    Route::post('/lessons/{lesson}/toggle-complete', [LessonProgressController::class, 'toggle']);
 });
 
 // Rutas Protegidas (Solo Admin)
