@@ -1,4 +1,3 @@
-// src/components/navigation/Sidebar.tsx
 "use client";
 
 import Link from "next/link";
@@ -68,7 +67,6 @@ export default function Sidebar({ type }: SidebarProps) {
     >
       <div className="p-8 flex items-center gap-3">
         <div className={cn("p-2.5 rounded-2xl bg-white shadow-sm", theme.logo)}>
-          {/* Usamos GraduationCap como logo base para Edu/Pro */}
           <GraduationCap size={24} strokeWidth={2.5} />
         </div>
         <span
