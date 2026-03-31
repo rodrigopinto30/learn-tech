@@ -41,6 +41,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/learn/courses/{course:id}', [CourseController::class, 'show']);
 
     Route::post('/lessons/{lesson}/toggle-complete', [LessonProgressController::class, 'toggle']);
+
+    Route::patch('/users/{user}', [AuthController::class, 'update']);
 });
 
 // Rutas Protegidas (Solo Admin)
