@@ -14,6 +14,7 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   setAuth: (user: User, token: string) => void;
+  updateUser: (data: Partial<User>) => void;
   logout: () => void;
 }
 
@@ -34,6 +35,14 @@ export const useAuthStore = create<AuthState>()(
         Cookies.remove('user_role');
         set({ user: null, token: null, isAuthenticated: false });
         window.location.href = '/login'; 
+      },
+      updateUser: (data) => {
+        set((state) => {
+          if (!state.user) return state;
+          const updatedUser = { ...state.user, ...data };
+          
+         return { user: updatedUser };
+        });
       },
     }),
     { 
