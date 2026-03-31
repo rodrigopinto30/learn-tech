@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseController;
 use App\Http\Controllers\Api\LessonController;
@@ -43,6 +44,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/lessons/{lesson}/toggle-complete', [LessonProgressController::class, 'toggle']);
 
     Route::patch('/users/{user}', [AuthController::class, 'update']);
+
+    Route::get('/assignments', [AssignmentController::class, 'index']);
+
+    Route::post('/assignments/{assignment}/submit', [AssignmentController::class, 'submit']);
 });
 
 // Rutas Protegidas (Solo Admin)
