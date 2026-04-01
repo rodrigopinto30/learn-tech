@@ -52,4 +52,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Lesson::class, 'lesson_user')->withTimestamps();
     }
+
+    public function achievements()
+    {
+        return $this->belongsToMany(Achievement::class)->withTimestamps();
+    }
 }

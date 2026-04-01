@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AchievementController;
 use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CourseController;
@@ -48,6 +49,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/assignments', [AssignmentController::class, 'index']);
 
     Route::post('/assignments/{assignment}/submit', [AssignmentController::class, 'submit']);
+
+    Route::get('/achievements', [AchievementController::class, 'index']);
 });
 
 // Rutas Protegidas (Solo Admin)
